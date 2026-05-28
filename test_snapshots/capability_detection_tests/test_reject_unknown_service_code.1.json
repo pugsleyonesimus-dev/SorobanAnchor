@@ -36,7 +36,7 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "bytes": "b07e08f7492dfe35658692d42db1c2710fa1d0bdd02e9dd01beebc39ecce945e"
+                  "bytes": "60c47c3a24803873a76b6a0eaa865bf20fd5b4ff54d52b449c27ee94854abd47"
                 }
               ]
             }
@@ -58,13 +58,13 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "string": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJDQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBSEszTSIsImV4cCI6ODY0MDB9.x0mkLnl7sad123N08nhqjNUDcd7XZD8tB7my62gIQ2tSkZXGU-VCqS3HvsyuzEDGicybzm9tY0ZM9ull6qzzDw"
+                  "string": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJDQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBSEszTSIsImV4cCI6ODY0MDB9.8OFmI497YHYgeE83Gn58_piCJzN_XYLymhKUdmzdEaZmEDe1WhMMhuipCSw3jHjIFGg4zbL0_TObhJEGsShxDg"
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "bytes": "b07e08f7492dfe35658692d42db1c2710fa1d0bdd02e9dd01beebc39ecce945e"
+                  "bytes": "60c47c3a24803873a76b6a0eaa865bf20fd5b4ff54d52b449c27ee94854abd47"
                 }
               ]
             }
@@ -73,6 +73,7 @@
         }
       ]
     ],
+    [],
     []
   ],
   "ledger": {
@@ -121,7 +122,7 @@
                 },
                 "durability": "persistent",
                 "val": {
-                  "bytes": "b07e08f7492dfe35658692d42db1c2710fa1d0bdd02e9dd01beebc39ecce945e"
+                  "bytes": "60c47c3a24803873a76b6a0eaa865bf20fd5b4ff54d52b449c27ee94854abd47"
                 }
               }
             },
@@ -211,7 +212,7 @@
                 },
                 "durability": "persistent",
                 "val": {
-                  "bytes": "b07e08f7492dfe35658692d42db1c2710fa1d0bdd02e9dd01beebc39ecce945e"
+                  "bytes": "60c47c3a24803873a76b6a0eaa865bf20fd5b4ff54d52b449c27ee94854abd47"
                 }
               }
             },
@@ -459,7 +460,7 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "bytes": "b07e08f7492dfe35658692d42db1c2710fa1d0bdd02e9dd01beebc39ecce945e"
+                  "bytes": "60c47c3a24803873a76b6a0eaa865bf20fd5b4ff54d52b449c27ee94854abd47"
                 }
               ]
             }
@@ -513,13 +514,13 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "string": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJDQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBSEszTSIsImV4cCI6ODY0MDB9.x0mkLnl7sad123N08nhqjNUDcd7XZD8tB7my62gIQ2tSkZXGU-VCqS3HvsyuzEDGicybzm9tY0ZM9ull6qzzDw"
+                  "string": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJDQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBSEszTSIsImV4cCI6ODY0MDB9.8OFmI497YHYgeE83Gn58_piCJzN_XYLymhKUdmzdEaZmEDe1WhMMhuipCSw3jHjIFGg4zbL0_TObhJEGsShxDg"
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "bytes": "b07e08f7492dfe35658692d42db1c2710fa1d0bdd02e9dd01beebc39ecce945e"
+                  "bytes": "60c47c3a24803873a76b6a0eaa865bf20fd5b4ff54d52b449c27ee94854abd47"
                 }
               ]
             }
@@ -597,7 +598,11 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "vec": []
+                  "vec": [
+                    {
+                      "u32": 99
+                    }
+                  ]
                 }
               ]
             }
@@ -719,7 +724,182 @@
                       "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                     },
                     {
-                      "vec": []
+                      "vec": [
+                        {
+                          "u32": 99
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": null,
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_call"
+              },
+              {
+                "bytes": "0000000000000000000000000000000000000000000000000000000000000001"
+              },
+              {
+                "symbol": "configure_services"
+              }
+            ],
+            "data": {
+              "vec": [
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                },
+                {
+                  "vec": [
+                    {
+                      "u32": 1
+                    },
+                    {
+                      "u32": 99
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000001",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "error"
+              },
+              {
+                "error": {
+                  "contract": 8
+                }
+              }
+            ],
+            "data": {
+              "vec": [
+                {
+                  "string": "failing with contract error"
+                },
+                {
+                  "u32": 8
+                }
+              ]
+            }
+          }
+        }
+      },
+      "failed_call": true
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000001",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "error"
+              },
+              {
+                "error": {
+                  "contract": 8
+                }
+              }
+            ],
+            "data": {
+              "string": "escalating error to panic"
+            }
+          }
+        }
+      },
+      "failed_call": true
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000001",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "error"
+              },
+              {
+                "error": {
+                  "contract": 8
+                }
+              }
+            ],
+            "data": {
+              "string": "caught error from function"
+            }
+          }
+        }
+      },
+      "failed_call": true
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": null,
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "error"
+              },
+              {
+                "error": {
+                  "contract": 8
+                }
+              }
+            ],
+            "data": {
+              "vec": [
+                {
+                  "string": "contract try_call failed"
+                },
+                {
+                  "symbol": "configure_services"
+                },
+                {
+                  "vec": [
+                    {
+                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                    },
+                    {
+                      "vec": [
+                        {
+                          "u32": 1
+                        },
+                        {
+                          "u32": 99
+                        }
+                      ]
                     }
                   ]
                 }

@@ -30,7 +30,7 @@
           "function": {
             "contract_fn": {
               "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
-              "function_name": "cache_metadata",
+              "function_name": "cache_metadata_swr",
               "args": [
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
@@ -96,7 +96,10 @@
                   ]
                 },
                 {
-                  "u64": 10
+                  "u64": 100
+                },
+                {
+                  "u64": 50
                 }
               ]
             }
@@ -105,12 +108,13 @@
         }
       ]
     ],
+    [],
     []
   ],
   "ledger": {
     "protocol_version": 21,
     "sequence_number": 0,
-    "timestamp": 11,
+    "timestamp": 1000,
     "network_id": "0000000000000000000000000000000000000000000000000000000000000000",
     "base_reserve": 0,
     "min_persistent_entry_ttl": 4096,
@@ -159,7 +163,7 @@
                         "symbol": "cached_at"
                       },
                       "val": {
-                        "u64": 0
+                        "u64": 1000
                       }
                     },
                     {
@@ -240,7 +244,7 @@
                         "symbol": "stale_ttl_seconds"
                       },
                       "val": {
-                        "u64": 0
+                        "u64": 50
                       }
                     },
                     {
@@ -248,7 +252,7 @@
                         "symbol": "ttl_seconds"
                       },
                       "val": {
-                        "u64": 10
+                        "u64": 100
                       }
                     }
                   ]
@@ -257,7 +261,7 @@
             },
             "ext": "v0"
           },
-          15
+          150
         ]
       ],
       [
@@ -457,7 +461,7 @@
                 "bytes": "0000000000000000000000000000000000000000000000000000000000000001"
               },
               {
-                "symbol": "cache_metadata"
+                "symbol": "cache_metadata_swr"
               }
             ],
             "data": {
@@ -526,7 +530,10 @@
                   ]
                 },
                 {
-                  "u64": 10
+                  "u64": 100
+                },
+                {
+                  "u64": 50
                 }
               ]
             }
@@ -547,7 +554,7 @@
                 "symbol": "fn_return"
               },
               {
-                "symbol": "cache_metadata"
+                "symbol": "cache_metadata_swr"
               }
             ],
             "data": "void"
@@ -571,11 +578,81 @@
                 "bytes": "0000000000000000000000000000000000000000000000000000000000000001"
               },
               {
-                "symbol": "get_cached_metadata"
+                "symbol": "refresh_metadata_cache_swr"
               }
             ],
             "data": {
-              "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+              "vec": [
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                },
+                {
+                  "map": [
+                    {
+                      "key": {
+                        "symbol": "anchor"
+                      },
+                      "val": {
+                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "average_settlement_time"
+                      },
+                      "val": {
+                        "u64": 300
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "is_active"
+                      },
+                      "val": {
+                        "bool": true
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "liquidity_score"
+                      },
+                      "val": {
+                        "u32": 8500
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "reputation_score"
+                      },
+                      "val": {
+                        "u32": 9000
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "total_volume"
+                      },
+                      "val": {
+                        "u64": 1000000
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "uptime_percentage"
+                      },
+                      "val": {
+                        "u32": 10001
+                      }
+                    }
+                  ]
+                },
+                {
+                  "u64": 100
+                },
+                {
+                  "u64": 50
+                }
+              ]
             }
           }
         }
@@ -595,7 +672,7 @@
               },
               {
                 "error": {
-                  "contract": 48
+                  "contract": 15
                 }
               }
             ],
@@ -605,7 +682,7 @@
                   "string": "failing with contract error"
                 },
                 {
-                  "u32": 48
+                  "u32": 15
                 }
               ]
             }
@@ -627,7 +704,7 @@
               },
               {
                 "error": {
-                  "contract": 48
+                  "contract": 15
                 }
               }
             ],
@@ -652,7 +729,7 @@
               },
               {
                 "error": {
-                  "contract": 48
+                  "contract": 15
                 }
               }
             ],
@@ -677,7 +754,7 @@
               },
               {
                 "error": {
-                  "contract": 48
+                  "contract": 15
                 }
               }
             ],
@@ -687,14 +764,193 @@
                   "string": "contract try_call failed"
                 },
                 {
-                  "symbol": "get_cached_metadata"
+                  "symbol": "refresh_metadata_cache_swr"
                 },
                 {
                   "vec": [
                     {
                       "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                    },
+                    {
+                      "map": [
+                        {
+                          "key": {
+                            "symbol": "anchor"
+                          },
+                          "val": {
+                            "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                          }
+                        },
+                        {
+                          "key": {
+                            "symbol": "average_settlement_time"
+                          },
+                          "val": {
+                            "u64": 300
+                          }
+                        },
+                        {
+                          "key": {
+                            "symbol": "is_active"
+                          },
+                          "val": {
+                            "bool": true
+                          }
+                        },
+                        {
+                          "key": {
+                            "symbol": "liquidity_score"
+                          },
+                          "val": {
+                            "u32": 8500
+                          }
+                        },
+                        {
+                          "key": {
+                            "symbol": "reputation_score"
+                          },
+                          "val": {
+                            "u32": 9000
+                          }
+                        },
+                        {
+                          "key": {
+                            "symbol": "total_volume"
+                          },
+                          "val": {
+                            "u64": 1000000
+                          }
+                        },
+                        {
+                          "key": {
+                            "symbol": "uptime_percentage"
+                          },
+                          "val": {
+                            "u32": 10001
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "u64": 100
+                    },
+                    {
+                      "u64": 50
                     }
                   ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": null,
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_call"
+              },
+              {
+                "bytes": "0000000000000000000000000000000000000000000000000000000000000001"
+              },
+              {
+                "symbol": "get_cached_metadata_swr"
+              }
+            ],
+            "data": {
+              "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000001",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_return"
+              },
+              {
+                "symbol": "get_cached_metadata_swr"
+              }
+            ],
+            "data": {
+              "vec": [
+                {
+                  "map": [
+                    {
+                      "key": {
+                        "symbol": "anchor"
+                      },
+                      "val": {
+                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "average_settlement_time"
+                      },
+                      "val": {
+                        "u64": 300
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "is_active"
+                      },
+                      "val": {
+                        "bool": true
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "liquidity_score"
+                      },
+                      "val": {
+                        "u32": 8500
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "reputation_score"
+                      },
+                      "val": {
+                        "u32": 9000
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "total_volume"
+                      },
+                      "val": {
+                        "u64": 1000000
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "uptime_percentage"
+                      },
+                      "val": {
+                        "u32": 9900
+                      }
+                    }
+                  ]
+                },
+                {
+                  "bool": false
                 }
               ]
             }

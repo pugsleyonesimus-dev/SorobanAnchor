@@ -121,12 +121,39 @@ pub struct TracingContext {
 pub struct AnchorServices {
     pub anchor: Address,
     pub services: Vec<u32>,
+    /// Schema version of the service-capability set (#239). Records are always
+    /// stamped with the version under which they were configured so capability
+    /// discovery is explicit and forward-compatible.
+    pub service_capability_version: u32,
 }
 
 pub const SERVICE_DEPOSITS: u32 = 1;
 pub const SERVICE_WITHDRAWALS: u32 = 2;
 pub const SERVICE_QUOTES: u32 = 3;
 pub const SERVICE_KYC: u32 = 4;
+
+/// Current on-chain service-capability schema version (#239).
+///
+/// This constant gates which service codes the contract recognises and is the
+/// anchor point for backwards-compatible evolution of the capability set:
+///
+/// - **Adding a service identifier** — extend the recognised code range
+///   ([`MAX_KNOWN_SERVICE_CODE`]) and bump this constant. New codes then become
+///   acceptable to [`configure_services_versioned`].
+/// - **Forward safety** — `configure_services_versioned` rejects any version
+///   *newer* than this constant, so a contract never stores a capability set it
+///   cannot interpret.
+/// - **Preserving existing anchors** — records written under an older version
+///   stay readable and usable: their codes are always a subset of the current
+///   recognised range, so [`supports_service`] and routing keep working without
+///   a forced re-configuration.
+pub const SERVICE_CAPABILITY_VERSION: u32 = 1;
+
+/// Highest service code recognised by [`SERVICE_CAPABILITY_VERSION`]. Codes
+/// outside `SERVICE_DEPOSITS..=MAX_KNOWN_SERVICE_CODE` are rejected by
+/// [`configure_services_versioned`]. Extend this (and bump the version) to
+/// introduce new service identifiers.
+const MAX_KNOWN_SERVICE_CODE: u32 = SERVICE_KYC;
 
 /// Typed representation of a service capability an anchor can support.
 ///
@@ -276,7 +303,7 @@ pub struct KycRecord {
 // ---------------------------------------------------------------------------
 
 #[contracttype]
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct AnchorMetadata {
     pub anchor: Address,
     pub reputation_score: u32,
@@ -297,6 +324,25 @@ pub struct MetadataCache {
     pub stale_ttl_seconds: u64,
     /// Set to `true` when the entry is within the stale window; caller should refresh.
     pub needs_refresh: bool,
+}
+
+/// Explicit lifecycle state of a metadata cache entry under the
+/// stale-while-revalidate (SWR) policy. Returned by
+/// [`AnchorKitContract::get_metadata_cache_state`] so callers can branch on
+/// freshness without triggering a panic on an expired/absent entry.
+#[contracttype]
+#[derive(Copy, Clone, Debug, PartialEq)]
+#[repr(u32)]
+pub enum MetadataCacheState {
+    /// No entry exists for the anchor.
+    Missing = 0,
+    /// Within the primary TTL — safe to use as-is.
+    Fresh = 1,
+    /// Past the primary TTL but within the stale grace window — usable, but the
+    /// caller should kick off a background refresh.
+    Stale = 2,
+    /// Past both the primary TTL and the stale window — must not be served.
+    Expired = 3,
 }
 
 #[contracttype]
@@ -909,7 +955,34 @@ pub fn is_attestor(env: Env, attestor: Address) -> bool {
     // Service configuration
     // -----------------------------------------------------------------------
 
+    /// Configure an anchor's supported services using the contract's current
+    /// capability version ([`SERVICE_CAPABILITY_VERSION`]). Equivalent to
+    /// [`configure_services_versioned`](Self::configure_services_versioned) with
+    /// `version = SERVICE_CAPABILITY_VERSION`.
     pub fn configure_services(env: Env, anchor: Address, services: Vec<u32>) {
+        Self::configure_services_versioned(env, anchor, services, SERVICE_CAPABILITY_VERSION);
+    }
+
+    /// Configure an anchor's supported services under an explicit capability
+    /// version (#239).
+    ///
+    /// Rejects (panics) when:
+    /// - the anchor is not a registered attestor (`AttestorNotRegistered`)
+    /// - `version` is `0` or newer than [`SERVICE_CAPABILITY_VERSION`]
+    ///   (`UnsupportedCapabilityVersion`) — the contract refuses capability sets
+    ///   it cannot interpret
+    /// - the service list is empty, contains duplicates, or contains a code the
+    ///   current version does not recognise (`InvalidServiceType`)
+    ///
+    /// On success the record is stored stamped with `version` so capability
+    /// discovery is explicit. Re-configuring overwrites the previous record,
+    /// which is how an anchor migrates to a newer version.
+    pub fn configure_services_versioned(
+        env: Env,
+        anchor: Address,
+        services: Vec<u32>,
+        version: u32,
+    ) {
         anchor.require_auth();
         if !env
             .storage()
@@ -917,6 +990,9 @@ pub fn is_attestor(env: Env, attestor: Address) -> bool {
             .has(&(symbol_short!("ATTESTOR"), anchor.clone()))
         {
             panic_with_error!(&env, ErrorCode::AttestorNotRegistered);
+        }
+        if version == 0 || version > SERVICE_CAPABILITY_VERSION {
+            panic_with_error!(&env, ErrorCode::UnsupportedCapabilityVersion);
         }
         if services.is_empty() {
             panic_with_error!(&env, ErrorCode::InvalidServiceType);
@@ -926,11 +1002,15 @@ pub fn is_attestor(env: Env, attestor: Address) -> bool {
             if seen.contains(&s) {
                 panic_with_error!(&env, ErrorCode::InvalidServiceType);
             }
+            if !Self::is_known_service_code(s) {
+                panic_with_error!(&env, ErrorCode::InvalidServiceType);
+            }
             seen.push_back(s);
         }
         let record = AnchorServices {
             anchor: anchor.clone(),
             services: services.clone(),
+            service_capability_version: version,
         };
         let key = (symbol_short!("SERVICES"), anchor.clone());
         env.storage().persistent().set(&key, &record);
@@ -939,6 +1019,23 @@ pub fn is_attestor(env: Env, attestor: Address) -> bool {
             .extend_ttl(&key, PERSISTENT_TTL, PERSISTENT_TTL);
         env.events()
             .publish((symbol_short!("services"), symbol_short!("config")), record);
+    }
+
+    /// The service-capability schema version this contract understands.
+    /// Off-chain capability discovery can read this to learn which service
+    /// codes the contract will accept.
+    pub fn current_capability_version(_env: Env) -> u32 {
+        SERVICE_CAPABILITY_VERSION
+    }
+
+    /// Return the capability version an anchor's stored service set was
+    /// configured under. Panics with `ServicesNotConfigured` if absent.
+    pub fn get_service_capability_version(env: Env, anchor: Address) -> u32 {
+        env.storage()
+            .persistent()
+            .get::<_, AnchorServices>(&(symbol_short!("SERVICES"), anchor))
+            .map(|r| r.service_capability_version)
+            .unwrap_or_else(|| panic_with_error!(&env, ErrorCode::ServicesNotConfigured))
     }
 
     pub fn get_supported_services(env: Env, anchor: Address) -> AnchorServices {
@@ -2139,6 +2236,88 @@ pub fn is_attestor(env: Env, attestor: Address) -> bool {
         env.storage().temporary().extend_ttl(&key, ledger_ttl, ledger_ttl);
     }
 
+    /// Report the SWR lifecycle state of an anchor's metadata cache entry
+    /// without panicking. This makes both fresh and stale availability explicit:
+    /// callers can distinguish `Fresh`, `Stale` (serve-but-refresh), `Expired`
+    /// (do not serve), and `Missing` rather than relying on a thrown error.
+    ///
+    /// Unlike [`get_cached_metadata_swr`](Self::get_cached_metadata_swr) this is a
+    /// pure read — it never mutates the stored `needs_refresh` flag.
+    pub fn get_metadata_cache_state(env: Env, anchor: Address) -> MetadataCacheState {
+        let key = (symbol_short!("METACACHE"), anchor);
+        let entry: MetadataCache = match env.storage().temporary().get(&key) {
+            Some(e) => e,
+            None => return MetadataCacheState::Missing,
+        };
+        let now = env.ledger().timestamp();
+        let age = now.saturating_sub(entry.cached_at);
+        if age <= entry.ttl_seconds {
+            MetadataCacheState::Fresh
+        } else if age <= entry.ttl_seconds.saturating_add(entry.stale_ttl_seconds) {
+            MetadataCacheState::Stale
+        } else {
+            MetadataCacheState::Expired
+        }
+    }
+
+    /// Complete an in-flight stale-while-revalidate refresh with freshly-fetched
+    /// metadata, preserving the last-known-good entry until the new data is
+    /// validated.
+    ///
+    /// Refresh semantics (issue #236):
+    /// - **Last-known-good preservation** — incoming metadata is validated
+    ///   *before* any storage write (see [`validate_metadata`]). If validation
+    ///   fails the call panics and the previously cached entry is left
+    ///   untouched, so a failed refresh never drops a usable cache entry.
+    /// - **Idempotent** — if the supplied metadata is byte-for-byte identical to
+    ///   the currently cached metadata *and* the entry is still `Fresh`, the call
+    ///   is a no-op: the `cached_at` clock is not reset, so repeated refreshes
+    ///   with unchanged data are stable. A refresh of a `Stale`/`Expired` entry
+    ///   (or with changed data) always rewrites and resets both TTL clocks.
+    ///
+    /// This is the SWR-aware counterpart to the destructive
+    /// [`refresh_metadata_cache`](Self::refresh_metadata_cache), which only
+    /// invalidates. Prefer this when you have replacement data in hand.
+    pub fn refresh_metadata_cache_swr(
+        env: Env,
+        anchor: Address,
+        metadata: AnchorMetadata,
+        ttl_seconds: u64,
+        stale_ttl_seconds: u64,
+    ) {
+        Self::require_admin(&env);
+        // Validate before touching storage so last-known-good survives a bad refresh.
+        Self::validate_metadata(&env, &anchor, &metadata);
+
+        let key = (symbol_short!("METACACHE"), anchor.clone());
+        let now = env.ledger().timestamp();
+
+        if let Some(existing) = env
+            .storage()
+            .temporary()
+            .get::<_, MetadataCache>(&key)
+        {
+            let age = now.saturating_sub(existing.cached_at);
+            let still_fresh = age <= existing.ttl_seconds;
+            if still_fresh && existing.metadata == metadata {
+                // Idempotent no-op: nothing changed and the entry is still fresh.
+                return;
+            }
+        }
+
+        let entry = MetadataCache {
+            metadata,
+            cached_at: now,
+            ttl_seconds,
+            stale_ttl_seconds,
+            needs_refresh: false,
+        };
+        let total_ttl = ttl_seconds.saturating_add(stale_ttl_seconds);
+        let ledger_ttl = if total_ttl as u32 > MIN_TEMP_TTL { total_ttl as u32 } else { MIN_TEMP_TTL };
+        env.storage().temporary().set(&key, &entry);
+        env.storage().temporary().extend_ttl(&key, ledger_ttl, ledger_ttl);
+    }
+
     // -----------------------------------------------------------------------
     // Capabilities cache
     // -----------------------------------------------------------------------
@@ -2293,6 +2472,21 @@ pub fn is_attestor(env: Env, attestor: Address) -> bool {
                 Some(q) => q,
                 None => continue,
             };
+
+            // #238: the anchor must advertise the quote service. An anchor that
+            // never configured SERVICE_QUOTES is excluded before scoring even if
+            // a stale quote happens to be stored for it.
+            if !Self::advertises_quote_service(&env, &anchor) {
+                continue;
+            }
+
+            // #238: the quote must be for the requested asset pair. Quotes whose
+            // base/quote assets differ from the request are not a valid route.
+            if quote.base_asset != options.request.base_asset
+                || quote.quote_asset != options.request.quote_asset
+            {
+                continue;
+            }
 
             // Filter expired quotes
             if quote.valid_until <= now { continue; }
@@ -2456,6 +2650,10 @@ pub fn is_attestor(env: Env, attestor: Address) -> bool {
                 Some(m) if m.is_active && m.reputation_score >= min_reputation => m,
                 _ => continue,
             };
+            // #238: only rank anchors that advertise the quote service.
+            if !Self::advertises_quote_service(&env, &anchor) {
+                continue;
+            }
             let lq_key = (symbol_short!("LATESTQ"), anchor.clone());
             let quote_id: u64 = match env.storage().persistent().get(&lq_key) {
                 Some(id) => id,
@@ -2480,6 +2678,10 @@ pub fn is_attestor(env: Env, attestor: Address) -> bool {
                 Some(m) if m.is_active && m.reputation_score >= min_reputation => m,
                 _ => continue,
             };
+            // #238: only rank anchors that advertise the quote service.
+            if !Self::advertises_quote_service(&env, &anchor) {
+                continue;
+            }
             let lq_key = (symbol_short!("LATESTQ"), anchor.clone());
             let quote_id: u64 = match env.storage().persistent().get(&lq_key) {
                 Some(id) => id,
@@ -2708,6 +2910,39 @@ pub fn is_attestor(env: Env, attestor: Address) -> bool {
             .get::<_, Address>(&admin_key(env))
             .unwrap_or_else(|| panic_with_error!(env, ErrorCode::NotInitialized));
         admin.require_auth();
+    }
+
+    /// Validate freshly-fetched anchor metadata before it is written to the
+    /// SWR cache. Panics with `ValidationError` on any problem so the caller's
+    /// last-known-good entry is preserved (no partial writes occur).
+    ///
+    /// Checks:
+    /// - the embedded `metadata.anchor` matches the key `anchor`
+    /// - `uptime_percentage` is within range (basis points, 0..=10000)
+    fn validate_metadata(env: &Env, anchor: &Address, metadata: &AnchorMetadata) {
+        if metadata.anchor != *anchor {
+            panic_with_error!(env, ErrorCode::ValidationError);
+        }
+        if metadata.uptime_percentage > 10_000 {
+            panic_with_error!(env, ErrorCode::ValidationError);
+        }
+    }
+
+    /// Returns `true` if `code` is a service identifier recognised by the
+    /// current [`SERVICE_CAPABILITY_VERSION`] (#239).
+    fn is_known_service_code(code: u32) -> bool {
+        code >= SERVICE_DEPOSITS && code <= MAX_KNOWN_SERVICE_CODE
+    }
+
+    /// Returns `true` iff `anchor` has configured services that include
+    /// `SERVICE_QUOTES`. Used by routing (#238) to exclude anchors that do not
+    /// advertise the quote service before scoring.
+    fn advertises_quote_service(env: &Env, anchor: &Address) -> bool {
+        env.storage()
+            .persistent()
+            .get::<_, AnchorServices>(&(symbol_short!("SERVICES"), anchor.clone()))
+            .map(|s| s.services.contains(&SERVICE_QUOTES))
+            .unwrap_or(false)
     }
 
     fn check_attestor(env: &Env, attestor: &Address) {

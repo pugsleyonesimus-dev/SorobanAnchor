@@ -36,7 +36,7 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "bytes": "b07e08f7492dfe35658692d42db1c2710fa1d0bdd02e9dd01beebc39ecce945e"
+                  "bytes": "b453d6634713f6f72bf4058b21a14ef89d6d38aa20389c18a36f4b66d27dab41"
                 }
               ]
             }
@@ -58,13 +58,13 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "string": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJDQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBSEszTSIsImV4cCI6ODY0MDB9.x0mkLnl7sad123N08nhqjNUDcd7XZD8tB7my62gIQ2tSkZXGU-VCqS3HvsyuzEDGicybzm9tY0ZM9ull6qzzDw"
+                  "string": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJDQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBSEszTSIsImV4cCI6ODY0MDB9.1430tKX0Oc4SrM4V0xbK2-v1Dnml-Zpxdq9PdcOi4uo7ujb1O290EkHsYc25NG_naw3pVoWOyulPXIgXS1rtBA"
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "bytes": "b07e08f7492dfe35658692d42db1c2710fa1d0bdd02e9dd01beebc39ecce945e"
+                  "bytes": "b453d6634713f6f72bf4058b21a14ef89d6d38aa20389c18a36f4b66d27dab41"
                 }
               ]
             }
@@ -121,7 +121,7 @@
                 },
                 "durability": "persistent",
                 "val": {
-                  "bytes": "b07e08f7492dfe35658692d42db1c2710fa1d0bdd02e9dd01beebc39ecce945e"
+                  "bytes": "b453d6634713f6f72bf4058b21a14ef89d6d38aa20389c18a36f4b66d27dab41"
                 }
               }
             },
@@ -211,7 +211,7 @@
                 },
                 "durability": "persistent",
                 "val": {
-                  "bytes": "b07e08f7492dfe35658692d42db1c2710fa1d0bdd02e9dd01beebc39ecce945e"
+                  "bytes": "b453d6634713f6f72bf4058b21a14ef89d6d38aa20389c18a36f4b66d27dab41"
                 }
               }
             },
@@ -459,7 +459,7 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "bytes": "b07e08f7492dfe35658692d42db1c2710fa1d0bdd02e9dd01beebc39ecce945e"
+                  "bytes": "b453d6634713f6f72bf4058b21a14ef89d6d38aa20389c18a36f4b66d27dab41"
                 }
               ]
             }
@@ -513,13 +513,13 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "string": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJDQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBSEszTSIsImV4cCI6ODY0MDB9.x0mkLnl7sad123N08nhqjNUDcd7XZD8tB7my62gIQ2tSkZXGU-VCqS3HvsyuzEDGicybzm9tY0ZM9ull6qzzDw"
+                  "string": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJDQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBSEszTSIsImV4cCI6ODY0MDB9.1430tKX0Oc4SrM4V0xbK2-v1Dnml-Zpxdq9PdcOi4uo7ujb1O290EkHsYc25NG_naw3pVoWOyulPXIgXS1rtBA"
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "bytes": "b07e08f7492dfe35658692d42db1c2710fa1d0bdd02e9dd01beebc39ecce945e"
+                  "bytes": "b453d6634713f6f72bf4058b21a14ef89d6d38aa20389c18a36f4b66d27dab41"
                 }
               ]
             }
@@ -588,7 +588,7 @@
                 "bytes": "0000000000000000000000000000000000000000000000000000000000000001"
               },
               {
-                "symbol": "configure_services"
+                "symbol": "configure_services_versioned"
               }
             ],
             "data": {
@@ -597,7 +597,14 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "vec": []
+                  "vec": [
+                    {
+                      "u32": 1
+                    }
+                  ]
+                },
+                {
+                  "u32": 2
                 }
               ]
             }
@@ -619,7 +626,7 @@
               },
               {
                 "error": {
-                  "contract": 8
+                  "contract": 27
                 }
               }
             ],
@@ -629,7 +636,7 @@
                   "string": "failing with contract error"
                 },
                 {
-                  "u32": 8
+                  "u32": 27
                 }
               ]
             }
@@ -651,7 +658,7 @@
               },
               {
                 "error": {
-                  "contract": 8
+                  "contract": 27
                 }
               }
             ],
@@ -676,7 +683,7 @@
               },
               {
                 "error": {
-                  "contract": 8
+                  "contract": 27
                 }
               }
             ],
@@ -701,7 +708,7 @@
               },
               {
                 "error": {
-                  "contract": 8
+                  "contract": 27
                 }
               }
             ],
@@ -711,7 +718,7 @@
                   "string": "contract try_call failed"
                 },
                 {
-                  "symbol": "configure_services"
+                  "symbol": "configure_services_versioned"
                 },
                 {
                   "vec": [
@@ -719,7 +726,14 @@
                       "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                     },
                     {
-                      "vec": []
+                      "vec": [
+                        {
+                          "u32": 1
+                        }
+                      ]
+                    },
+                    {
+                      "u32": 2
                     }
                   ]
                 }
