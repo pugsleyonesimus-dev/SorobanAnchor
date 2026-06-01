@@ -147,6 +147,15 @@ pub struct AttestorProfile {
 }
 
 #[contracttype]
+#[derive(Clone, Debug, PartialEq)]
+pub struct ServiceRetirementInfo {
+    pub service_code: u32,
+    pub retired: bool,
+    pub retirement_timestamp: Option<u64>,
+    pub deprecation_notice: Option<String>,
+}
+
+#[contracttype]
 #[derive(Clone)]
 pub struct AnchorServices {
     pub anchor: Address,
@@ -155,6 +164,8 @@ pub struct AnchorServices {
     /// stamped with the version under which they were configured so capability
     /// discovery is explicit and forward-compatible.
     pub service_capability_version: u32,
+    /// Retirement metadata for services, indicating if they are deprecated or retired.
+    pub service_retirements: Vec<ServiceRetirementInfo>,
 }
 
 pub const SERVICE_DEPOSITS: u32 = 1;
@@ -2245,7 +2256,12 @@ impl AnchorKitContract {
     /// AnchorKitContract::configure_services(env, anchor, services);
     /// ```
     pub fn configure_services(env: Env, anchor: Address, services: Vec<u32>) {
-        Self::configure_services_versioned(env, anchor, services, SERVICE_CAPABILITY_VERSION);
+        Self::configure_services_versioned(env, anchor, services, Vec::new(&env), SERVICE_CAPABILITY_VERSION);
+    }
+
+    /// Configure an anchor's supported services and retirement metadata (simple version).
+    pub fn configure_services_with_retirement(env: Env, anchor: Address, services: Vec<u32>, service_retirements: Vec<ServiceRetirementInfo>) {
+        Self::configure_services_versioned(env, anchor, services, service_retirements, SERVICE_CAPABILITY_VERSION);
     }
 
     /// Configure an anchor's supported services under an explicit capability
@@ -2303,6 +2319,7 @@ impl AnchorKitContract {
         env: Env,
         anchor: Address,
         services: Vec<u32>,
+        service_retirements: Vec<ServiceRetirementInfo>,
         version: u32,
     ) {
         anchor.require_auth();
@@ -2334,6 +2351,18 @@ impl AnchorKitContract {
             normalized.push_back(s);
         }
         
+        // Validate service retirements
+        let mut seen_retirements = Vec::new(&env);
+        for retirement in service_retirements.iter() {
+            if seen_retirements.contains(&retirement.service_code) {
+                panic_with_error!(&env, ErrorCode::InvalidServiceType);
+            }
+            if !Self::is_known_service_code(retirement.service_code) {
+                panic_with_error!(&env, ErrorCode::InvalidServiceType);
+            }
+            seen_retirements.push_back(retirement.service_code);
+        }
+        
         // Sort services deterministically (ascending order) for consistent storage
         // and predictable behavior regardless of submission order.
         Self::sort_services(&env, &mut normalized);
@@ -2342,6 +2371,7 @@ impl AnchorKitContract {
             anchor: anchor.clone(),
             services: normalized,
             service_capability_version: version,
+            service_retirements,
         };
         let key = make_storage_key(&env, &[b"SERVICES", &raw]);
         env.storage().persistent().set(&key, &record);
@@ -2453,7 +2483,38 @@ impl AnchorKitContract {
             .unwrap_or_else(|| panic_with_error!(&env, ErrorCode::ServicesNotConfigured))
     }
 
-    /// Check if an anchor supports a specific service.
+    /// Get active (non-retired) services for an anchor.
+    ///
+    /// # Arguments
+    ///
+    /// * `env` - The Soroban environment context.
+    /// * `anchor` - Address of the anchor.
+    ///
+    /// # Returns
+    ///
+    /// Vector of active service type codes.
+    pub fn get_active_services(env: Env, anchor: Address) -> Vec<u32> {
+        let record = Self::get_supported_services(env, anchor);
+        let mut active = Vec::new(&env);
+        for service in record.services.iter() {
+            if !Self::is_service_retired(&record, service) {
+                active.push_back(service);
+            }
+        }
+        active
+    }
+
+    /// Helper to check if a service is retired in an AnchorServices record.
+    fn is_service_retired(record: &AnchorServices, service: u32) -> bool {
+        for retirement in record.service_retirements.iter() {
+            if retirement.service_code == service && retirement.retired {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Check if an anchor supports a specific service and it is not retired.
     ///
     /// # Arguments
     ///
@@ -2463,7 +2524,7 @@ impl AnchorKitContract {
     ///
     /// # Returns
     ///
-    /// `true` if the anchor supports the service, `false` otherwise.
+    /// `true` if the anchor supports the service and it is not retired, `false` otherwise.
     ///
     /// # Errors
     ///
@@ -2487,7 +2548,121 @@ impl AnchorKitContract {
             .persistent()
             .get::<_, AnchorServices>(&make_storage_key(&env, &[b"SERVICES", &raw]))
             .unwrap_or_else(|| panic_with_error!(&env, ErrorCode::ServicesNotConfigured));
-        record.services.contains(&service)
+        record.services.contains(&service) && !Self::is_service_retired(&record, service)
+    }
+
+    /// Get retirement info for a specific service.
+    ///
+    /// # Arguments
+    ///
+    /// * `env` - The Soroban environment context.
+    /// * `anchor` - Address of the anchor.
+    /// * `service` - Service type code to check.
+    ///
+    /// # Returns
+    ///
+    /// `Option<ServiceRetirementInfo>` with retirement metadata if found.
+    pub fn get_service_retirement_info(env: Env, anchor: Address, service: u32) -> Option<ServiceRetirementInfo> {
+        let record = Self::get_supported_services(env, anchor);
+        for retirement in record.service_retirements.iter() {
+            if retirement.service_code == service {
+                return Some(retirement);
+            }
+        }
+        None
+    }
+
+    /// Retire a specific service for an anchor.
+    ///
+    /// # Arguments
+    ///
+    /// * `env` - The Soroban environment context.
+    /// * `anchor` - Address of the anchor.
+    /// * `service` - Service type code to retire.
+    /// * `retirement_timestamp` - Optional timestamp when retirement takes effect.
+    /// * `deprecation_notice` - Optional notice about the retirement.
+    pub fn retire_service(env: Env, anchor: Address, service: u32, retirement_timestamp: Option<u64>, deprecation_notice: Option<String>) {
+        anchor.require_auth();
+        let xdr = anchor.clone().to_xdr(&env);
+        let raw = xdr_to_vec(&xdr);
+        let key = make_storage_key(&env, &[b"SERVICES", &raw]);
+        let mut record = env
+            .storage()
+            .persistent()
+            .get::<_, AnchorServices>(&key)
+            .unwrap_or_else(|| panic_with_error!(&env, ErrorCode::ServicesNotConfigured));
+        
+        // Check if retirement info already exists for this service
+        let mut found = false;
+        let mut new_retirements = Vec::new(&env);
+        for retirement in record.service_retirements.iter() {
+            if retirement.service_code == service {
+                // Update existing retirement info
+                new_retirements.push_back(ServiceRetirementInfo {
+                    service_code: service,
+                    retired: true,
+                    retirement_timestamp: retirement_timestamp.or(retirement.retirement_timestamp),
+                    deprecation_notice: deprecation_notice.or(retirement.deprecation_notice),
+                });
+                found = true;
+            } else {
+                new_retirements.push_back(retirement);
+            }
+        }
+        
+        if !found {
+            // Add new retirement info
+            new_retirements.push_back(ServiceRetirementInfo {
+                service_code: service,
+                retired: true,
+                retirement_timestamp,
+                deprecation_notice,
+            });
+        }
+        
+        record.service_retirements = new_retirements;
+        env.storage().persistent().set(&key, &record);
+        env.storage().persistent().extend_ttl(&key, PERSISTENT_TTL, PERSISTENT_TTL);
+        env.events().publish((symbol_short!("services"), symbol_short!("retire")), (anchor, service));
+    }
+
+    /// Unretire a specific service for an anchor.
+    ///
+    /// # Arguments
+    ///
+    /// * `env` - The Soroban environment context.
+    /// * `anchor` - Address of the anchor.
+    /// * `service` - Service type code to unretire.
+    pub fn unretire_service(env: Env, anchor: Address, service: u32) {
+        anchor.require_auth();
+        let xdr = anchor.clone().to_xdr(&env);
+        let raw = xdr_to_vec(&xdr);
+        let key = make_storage_key(&env, &[b"SERVICES", &raw]);
+        let mut record = env
+            .storage()
+            .persistent()
+            .get::<_, AnchorServices>(&key)
+            .unwrap_or_else(|| panic_with_error!(&env, ErrorCode::ServicesNotConfigured));
+        
+        let mut new_retirements = Vec::new(&env);
+        for retirement in record.service_retirements.iter() {
+            if retirement.service_code == service {
+                // Mark as not retired but keep the metadata for history
+                new_retirements.push_back(ServiceRetirementInfo {
+                    service_code: service,
+                    retired: false,
+                    retirement_timestamp: None,
+                    deprecation_notice: retirement.deprecation_notice,
+                });
+            } else {
+                new_retirements.push_back(retirement);
+            }
+        }
+        
+        record.service_retirements = new_retirements;
+        env.storage().persistent().set(&key, &record);
+        env.storage().persistent().extend_ttl(&key, PERSISTENT_TTL, PERSISTENT_TTL);
+        env.events().publish((symbol_short!("services"), symbol_short!("unretire")), (anchor, service));
     }
 
     // -----------------------------------------------------------------------

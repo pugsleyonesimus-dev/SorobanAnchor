@@ -199,7 +199,7 @@ pub use sep24::{
     InteractiveDepositResponse, InteractiveWithdrawalResponse, Sep24TransactionStatusResponse,
     RawInteractiveDepositResponse, RawInteractiveWithdrawalResponse, RawSep24TransactionResponse,
 };
-pub use contract::{AnchorKitContract, EndpointUpdated, CacheConfig};
+pub use contract::{AnchorKitContract, EndpointUpdated, CacheConfig, ServiceRetirementInfo, AnchorServices};
 pub use contract::{HealthStatus, MetadataFreshnessReport, RateLimiterHealth};
 pub use contract::{AnchorHealthMetrics, AnchorProofRecord};
 pub use transaction_state_tracker::{TransactionState, TransactionStateRecord, RecoveryMetadata};
